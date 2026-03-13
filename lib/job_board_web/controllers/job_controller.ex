@@ -7,10 +7,9 @@ defmodule JobBoardWeb.JobController do
   # Public actions (no auth required)
   # ---------------------------------------------------------------------------
 
-  @doc "GET /api/jobs — list published jobs. Supports search params in Phase 4."
-  def index(conn, _params) do
-    # TODO Phase 4: pass params to Jobs.search_jobs/1 for filtering and pagination
-    jobs = Jobs.list_jobs()
+  @doc "GET /api/jobs — list published jobs with optional search/filter/pagination."
+  def index(conn, params) do
+    jobs = Jobs.search_jobs(params)
     json(conn, %{jobs: Enum.map(jobs, &job_json/1)})
   end
 

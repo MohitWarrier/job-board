@@ -16,9 +16,8 @@ defmodule JobBoard.Jobs do
   # Phase 2 — CRUD
   # ---------------------------------------------------------------------------
 
-  @doc "Returns all published jobs. TODO: add search/pagination in Phase 4."
+  @doc "Returns all published jobs."
   def list_jobs do
-    # TODO Phase 4: accept a params map and filter by q, loc, min_salary, page
     Repo.all(from j in Job, where: j.status == "published", order_by: [desc: j.inserted_at])
   end
 
@@ -53,25 +52,54 @@ defmodule JobBoard.Jobs do
   end
 
   # ---------------------------------------------------------------------------
-  # Phase 4 — Search and Pagination (TODO)
+  # Phase 4 — Search and Pagination
   # ---------------------------------------------------------------------------
+
+  @per_page 20
 
   @doc """
   Searches published jobs with optional filters.
 
-  ## Params (all optional)
+  ## Params (all optional, string keys)
   - `"q"` — keyword search on title (case-insensitive)
   - `"loc"` — filter by location (case-insensitive)
   - `"min_salary"` — minimum salary (integer)
-  - `"page"` — page number, default 1 (20 results per page)
-
-  TODO: implement this in Phase 4.
+  - `"page"` — page number, default 1 (#{@per_page} results per page)
   """
-  def search_jobs(_params) do
-    # TODO Phase 4:
-    # 1. Start with a base query: from j in Job, where: j.status == "published"
-    # 2. Pipe through filter functions for each param
-    # 3. Add limit(20) and offset((page - 1) * 20)
-    list_jobs()
+  def search_jobs(params) do
+    page = parse_page(params["page"])
+
+    from(j in Job, where: j.status == "published", order_by: [desc: j.inserted_at])
+    |> filter_by_title(params["q"])
+    |> filter_by_location(params["loc"])
+    |> filter_by_min_salary(params["min_salary"])
+    |> limit(@per_page)
+    |> offset(^((page - 1) * @per_page))
+    |> Repo.all()
+  end
+
+  defp filter_by_title(query, nil), do: query
+  defp filter_by_title(query, ""), do: query
+  defp filter_by_title(query, q), do: where(query, [j], ilike(j.title, ^"%#{q}%"))
+
+  defp filter_by_location(query, nil), do: query
+  defp filter_by_location(query, ""), do: query
+  defp filter_by_location(query, loc), do: where(query, [j], ilike(j.location, ^"%#{loc}%"))
+
+  defp filter_by_min_salary(query, nil), do: query
+  defp filter_by_min_salary(query, ""), do: query
+  defp filter_by_min_salary(query, min) do
+    case Integer.parse(to_string(min)) do
+      {val, _} -> where(query, [j], j.salary >= ^val)
+      :error -> query
+    end
+  end
+
+  defp parse_page(nil), do: 1
+  defp parse_page(p) do
+    case Integer.parse(to_string(p)) do
+      {val, _} when val > 0 -> val
+      _ -> 1
+    end
   end
 end
