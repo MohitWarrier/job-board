@@ -12,9 +12,7 @@ defmodule JobBoard.Application do
       JobBoard.Repo,
       {DNSCluster, query: Application.get_env(:job_board, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: JobBoard.PubSub},
-      # Start a worker by calling: JobBoard.Worker.start_link(arg)
-      # {JobBoard.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Oban, Application.fetch_env!(:job_board, Oban)},
       JobBoardWeb.Endpoint
     ]
 

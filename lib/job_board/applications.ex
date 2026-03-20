@@ -22,7 +22,7 @@ defmodule JobBoard.Applications do
   (job_id, user_id). If the seeker has already applied, the changeset
   will return a readable error.
 
-  TODO Phase 5: enqueue EmailWorker after successful insert.
+  On success, enqueues an EmailWorker background job via Oban.
   """
   def apply(user, job_id, attrs \\ %{}) do
     job = Jobs.get_job!(job_id)
@@ -30,12 +30,10 @@ defmodule JobBoard.Applications do
     %Application{job_id: job.id, user_id: user.id}
     |> Application.changeset(attrs)
     |> Repo.insert()
-
-    # TODO Phase 5: after {:ok, application}, enqueue email:
-    # |> tap(fn
-    #   {:ok, application} -> enqueue_confirmation_email(application)
-    #   _ -> :ok
-    # end)
+    |> tap(fn
+      {:ok, application} -> enqueue_confirmation_email(application)
+      _ -> :ok
+    end)
   end
 
   @doc "Returns all applications submitted by the given user, with jobs preloaded."
@@ -59,13 +57,12 @@ defmodule JobBoard.Applications do
   end
 
   # ---------------------------------------------------------------------------
-  # Phase 5 — Background email (TODO)
+  # Phase 5 — Background email
   # ---------------------------------------------------------------------------
 
-  # TODO Phase 5: implement this function
-  # defp enqueue_confirmation_email(application) do
-  #   %{user_id: application.user_id, job_id: application.job_id, type: "application_confirmation"}
-  #   |> JobBoard.Workers.EmailWorker.new()
-  #   |> Oban.insert()
-  # end
+  defp enqueue_confirmation_email(application) do
+    %{user_id: application.user_id, job_id: application.job_id, type: "application_confirmation"}
+    |> JobBoard.Workers.EmailWorker.new()
+    |> Oban.insert()
+  end
 end

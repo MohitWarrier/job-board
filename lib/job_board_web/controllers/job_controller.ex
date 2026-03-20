@@ -37,6 +37,8 @@ defmodule JobBoardWeb.JobController do
           |> put_status(:unprocessable_entity)
           |> json(%{errors: format_errors(changeset)})
       end
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -54,6 +56,8 @@ defmodule JobBoardWeb.JobController do
           |> put_status(:unprocessable_entity)
           |> json(%{errors: format_errors(changeset)})
       end
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -64,6 +68,8 @@ defmodule JobBoardWeb.JobController do
     with :ok <- require_owner(conn, job) do
       Jobs.delete_job(job)
       send_resp(conn, :no_content, "")
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -72,6 +78,8 @@ defmodule JobBoardWeb.JobController do
     with :ok <- require_employer(conn) do
       jobs = Jobs.list_my_jobs(conn.assigns.current_user)
       json(conn, %{jobs: Enum.map(jobs, &job_json/1)})
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -83,12 +91,11 @@ defmodule JobBoardWeb.JobController do
     if conn.assigns.current_user.role == "employer" do
       :ok
     else
-      conn
-      |> put_status(:forbidden)
-      |> json(%{error: "only employers can perform this action"})
-      |> halt()
-
-      {:error, :forbidden}
+      {:error,
+       conn
+       |> put_status(:forbidden)
+       |> json(%{error: "only employers can perform this action"})
+       |> halt()}
     end
   end
 
@@ -96,12 +103,11 @@ defmodule JobBoardWeb.JobController do
     if job.user_id == conn.assigns.current_user.id do
       :ok
     else
-      conn
-      |> put_status(:forbidden)
-      |> json(%{error: "you do not own this job"})
-      |> halt()
-
-      {:error, :forbidden}
+      {:error,
+       conn
+       |> put_status(:forbidden)
+       |> json(%{error: "you do not own this job"})
+       |> halt()}
     end
   end
 

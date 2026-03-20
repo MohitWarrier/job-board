@@ -12,8 +12,8 @@ defmodule JobBoard.Workers.EmailWorker do
                          → retryable (on failure, until max_attempts)
                          → discarded (after max_attempts exhausted)
 
-  TODO Phase 5: hook this up in Applications.apply/3 and add Oban to the
-  supervision tree in lib/job_board/application.ex.
+  Hooked up in Applications.apply/3. Oban is started in the supervision tree
+  in lib/job_board/application.ex.
   """
 
   use Oban.Worker, queue: :emails, max_attempts: 3

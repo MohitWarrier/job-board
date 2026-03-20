@@ -15,10 +15,11 @@ defmodule JobBoardWeb.AuthController do
   Returns 422 with validation errors on failure.
   """
   def register(conn, params) do
-
     case Accounts.register_user(params) do
       {:ok, user} ->
-        Logger.info("[AUTH] Registration SUCCESS — email=#{user.email} role=#{user.role} id=#{user.id}")
+        Logger.info(
+          "[AUTH] Registration SUCCESS — email=#{user.email} role=#{user.role} id=#{user.id}"
+        )
 
         conn
         |> put_status(:created)

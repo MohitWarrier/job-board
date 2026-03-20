@@ -20,6 +20,9 @@ config :job_board, JobBoardWeb.Endpoint,
   secret_key_base: "6FAnJFyabMXc9TxVwcLzEGm0t6Evtb7qz3MhF4nHuMQX9aGQtsVB8MXTLm3lAhys",
   server: false
 
+# Disable Oban in tests (jobs are inserted but never executed)
+config :job_board, Oban, testing: :inline
+
 # In test we don't send emails
 config :job_board, JobBoard.Mailer, adapter: Swoosh.Adapters.Test
 

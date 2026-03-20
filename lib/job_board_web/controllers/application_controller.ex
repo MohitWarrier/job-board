@@ -20,6 +20,8 @@ defmodule JobBoardWeb.ApplicationController do
           |> put_status(:unprocessable_entity)
           |> json(%{errors: format_errors(changeset)})
       end
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -28,6 +30,8 @@ defmodule JobBoardWeb.ApplicationController do
     with :ok <- require_seeker(conn) do
       applications = Applications.list_my_applications(conn.assigns.current_user)
       json(conn, %{applications: Enum.map(applications, &application_json/1)})
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -38,6 +42,8 @@ defmodule JobBoardWeb.ApplicationController do
     with :ok <- require_job_owner(conn, job) do
       applications = Applications.list_for_job(job)
       json(conn, %{applications: Enum.map(applications, &application_json/1)})
+    else
+      {:error, conn} -> conn
     end
   end
 
@@ -49,12 +55,11 @@ defmodule JobBoardWeb.ApplicationController do
     if conn.assigns.current_user.role == "seeker" do
       :ok
     else
-      conn
-      |> put_status(:forbidden)
-      |> json(%{error: "only job seekers can perform this action"})
-      |> halt()
-
-      {:error, :forbidden}
+      {:error,
+       conn
+       |> put_status(:forbidden)
+       |> json(%{error: "only job seekers can perform this action"})
+       |> halt()}
     end
   end
 
@@ -64,12 +69,11 @@ defmodule JobBoardWeb.ApplicationController do
     if user.role == "employer" && job.user_id == user.id do
       :ok
     else
-      conn
-      |> put_status(:forbidden)
-      |> json(%{error: "you do not own this job"})
-      |> halt()
-
-      {:error, :forbidden}
+      {:error,
+       conn
+       |> put_status(:forbidden)
+       |> json(%{error: "you do not own this job"})
+       |> halt()}
     end
   end
 
@@ -91,6 +95,7 @@ defmodule JobBoardWeb.ApplicationController do
 
   defp maybe_put(map, key, record, fun) do
     case Map.get(record, key) do
+      %Ecto.Association.NotLoaded{} -> map
       %_{} = assoc -> Map.put(map, key, fun.(assoc))
       _ -> map
     end

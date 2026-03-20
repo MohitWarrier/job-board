@@ -88,6 +88,7 @@ defmodule JobBoard.Jobs do
 
   defp filter_by_min_salary(query, nil), do: query
   defp filter_by_min_salary(query, ""), do: query
+
   defp filter_by_min_salary(query, min) do
     case Integer.parse(to_string(min)) do
       {val, _} -> where(query, [j], j.salary >= ^val)
@@ -96,6 +97,7 @@ defmodule JobBoard.Jobs do
   end
 
   defp parse_page(nil), do: 1
+
   defp parse_page(p) do
     case Integer.parse(to_string(p)) do
       {val, _} when val > 0 -> val
